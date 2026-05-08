@@ -101,6 +101,17 @@ export const EditorProvider = ({ children, template }) => {
             }
           });
         });
+
+        // Force local state update immediately so the user doesn't have to wait for the observer
+        setFiles(defaultFiles);
+        if (defaultFiles.length > 1) {
+          // Open the first non-folder file automatically
+          const firstFile = defaultFiles.find(f => !f.isFolder);
+          if (firstFile) {
+            setActiveFileId(firstFile.id);
+            setOpenFileIds([firstFile.id]);
+          }
+        }
       } else {
         setFiles(filesArray);
       }
