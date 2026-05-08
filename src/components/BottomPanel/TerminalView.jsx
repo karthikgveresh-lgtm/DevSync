@@ -105,7 +105,8 @@ export const TerminalView = () => {
 
     pushLines([
       { type: 'prompt', text: `${PROMPT}run` },
-      { type: 'info', text: `  ► Running ${activeFile.name} (${lang})...` },
+      { type: 'info', text: `  ⚙️ TeamKode Compiler: Preparing to run ${activeFile.name}...` },
+      { type: 'info', text: `  🌐 Connecting to remote execution server (${lang})...` },
       { type: 'blank', text: '' },
     ]);
 
@@ -113,11 +114,16 @@ export const TerminalView = () => {
     const result = await executeCode(lang, code);
     setIsRunning(false);
 
-    const outputLines = (result || '(no output)').split('\n').map(l => ({
-      type: l.toLowerCase().startsWith('✖') || l.toLowerCase().includes('error') ? 'error' : 'output',
-      text: `  ${l}`,
-    }));
-    pushLines([...outputLines, { type: 'blank', text: '' }]);
+    if (!result || result.trim() === '') {
+       pushLines([{ type: 'output', text: '  (Program executed successfully but returned no output)' }]);
+    } else {
+      const outputLines = result.split('\n').map(l => ({
+        type: l.toLowerCase().startsWith('✖') || l.toLowerCase().includes('error') ? 'error' : 'output',
+        text: `  ${l}`,
+      }));
+      pushLines(outputLines);
+    }
+    pushLines([{ type: 'blank', text: '' }]);
   }, [activeFile, activeFileId, ydoc, pushLines]);
 
   const handleCommand = useCallback(async (cmd) => {
