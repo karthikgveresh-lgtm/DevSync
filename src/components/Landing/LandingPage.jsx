@@ -152,7 +152,7 @@ export const LandingPage = ({ onEnter }) => {
             {/* Logo */}
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 100, objectFit: 'contain' }} />
+                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 180, objectFit: 'contain' }} />
               </div>
             </motion.div>
 
