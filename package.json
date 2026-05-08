@@ -8,8 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "node server/server.js",
-    "start": "node server/server.js"
+    "server": "node server/server.cjs",
+    "start": "node server/server.cjs"
   },
   "dependencies": {
     "@hocuspocus/server": "^4.0.0",
@@ -20,11 +20,14 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-resizable-panels": "^4.11.0",
+    "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.3",
     "ws": "^8.20.0",
     "y-monaco": "^0.1.6",
     "y-websocket": "^1.5.0",
-    "yjs": "^13.6.30"
+    "yjs": "^13.6.30",
+    "express": "^4.21.2",
+    "cors": "^2.8.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
