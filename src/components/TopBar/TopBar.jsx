@@ -87,7 +87,7 @@ export const TopBar = () => {
 
   return (
     <div className="title-bar h-[30px] bg-[#1e1e1e] flex items-center px-3 border-b border-[#2d2d2d] select-none text-[13px] text-[#cccccc]">
-      <img src="/logo.png" alt="TeamKode" style={{ height: 18, marginRight: 8, marginLeft: 4 }} />
+      <img src="/logo.png" alt="TeamKode" style={{ height: 22, marginRight: 12, marginLeft: 2 }} />
       
       <DropdownMenu label="File" items={fileMenu} isOpen={openMenu === 'File'} onToggle={() => toggleMenu('File')} closeAll={closeAll} />
       <DropdownMenu label="Edit" items={editMenu} isOpen={openMenu === 'Edit'} onToggle={() => toggleMenu('Edit')} closeAll={closeAll} />

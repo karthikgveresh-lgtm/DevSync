@@ -151,12 +151,8 @@ export const LandingPage = ({ onEnter }) => {
           >
             {/* Logo */}
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 64, objectFit: 'contain' }} />
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: 'white', letterSpacing: -1 }}>TeamKode</div>
-                  <div style={{ fontSize: 13, color: '#6366f1', fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase' }}>Collaborative IDE</div>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 100, objectFit: 'contain' }} />
               </div>
             </motion.div>
 
