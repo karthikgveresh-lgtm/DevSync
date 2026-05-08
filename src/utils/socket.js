@@ -7,5 +7,6 @@ export const initSocket = async () => {
     timeout: 10000,
     transports: ['websocket'],
   };
-  return io('http://localhost:5005', options);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5005';
+  return io(backendUrl, options);
 };

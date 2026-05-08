@@ -98,7 +98,7 @@ export const LandingPage = ({ onEnter }) => {
       const url = new URL(joinInput.trim());
       parsedRoom = url.searchParams.get('room') || parsedRoom;
       if (url.searchParams.get('interview') === '1') parsedIsInterview = true;
-    } catch (_) {}
+    } catch (_) { }
     onEnter({ roomId: parsedRoom, email: joinEmail.trim(), isHost: false, isInterviewMode: parsedIsInterview });
   };
 
@@ -152,7 +152,7 @@ export const LandingPage = ({ onEnter }) => {
             {/* Logo */}
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 180, objectFit: 'contain' }} />
+                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 200, objectFit: 'contain' }} />
               </div>
             </motion.div>
 
@@ -182,65 +182,65 @@ export const LandingPage = ({ onEnter }) => {
               />
             </motion.div>
 
-              {/* Action buttons */}
-              <div style={{ display: 'flex', gap: 12, width: '100%', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', gap: 12, width: '100%' }}>
-                  <motion.button whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(0,122,204,0.5)' }} whileTap={{ scale: 0.97 }}
-                    onClick={() => { setIsInterviewMode(false); handleCreateWorkspace(); }} disabled={!email.trim() || !email.includes('@')}
-                    style={{
-                      flex: 1, padding: '14px 20px', background: (email.trim() && email.includes('@')) ? 'linear-gradient(135deg, #007acc, #0062a3)' : 'rgba(255,255,255,0.05)',
-                      border: 'none', borderRadius: 14, color: (email.trim() && email.includes('@')) ? 'white' : '#555', fontSize: 14, fontWeight: 700,
-                      cursor: (email.trim() && email.includes('@')) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                      transition: 'all 0.2s',
-                    }}>
-                    <Plus size={18} /> Create Workspace
-                  </motion.button>
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => setStep('join')}
-                    style={{
-                      flex: 1, padding: '14px 20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
-                      borderRadius: 14, color: '#cccccc', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                    }}>
-                    <LogIn size={18} /> Join Workspace
-                  </motion.button>
-                </div>
-                {/* ── Interview Mode Button ── */}
-                <motion.button
-                  whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(124,111,255,0.5)' }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    if (!email.trim() || !email.includes('@')) {
-                      alert('Please enter your email first.');
-                      return;
-                    }
-                    setIsInterviewMode(true);
-                    handleCreateWorkspace();
-                  }}
-                  disabled={!email.trim() || !email.includes('@')}
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: 12, width: '100%', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', gap: 12, width: '100%' }}>
+                <motion.button whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(0,122,204,0.5)' }} whileTap={{ scale: 0.97 }}
+                  onClick={() => { setIsInterviewMode(false); handleCreateWorkspace(); }} disabled={!email.trim() || !email.includes('@')}
                   style={{
-                    width: '100%', padding: '13px 20px',
-                    background: (email.trim() && email.includes('@'))
-                      ? 'linear-gradient(135deg, #7c6fff22, #5e4dff22)'
-                      : 'rgba(255,255,255,0.03)',
-                    border: (email.trim() && email.includes('@'))
-                      ? '1px solid #7c6fff60'
-                      : '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 14,
-                    color: (email.trim() && email.includes('@')) ? '#a89eff' : '#444',
-                    fontSize: 14, fontWeight: 700,
-                    cursor: (email.trim() && email.includes('@')) ? 'pointer' : 'not-allowed',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    flex: 1, padding: '14px 20px', background: (email.trim() && email.includes('@')) ? 'linear-gradient(135deg, #007acc, #0062a3)' : 'rgba(255,255,255,0.05)',
+                    border: 'none', borderRadius: 14, color: (email.trim() && email.includes('@')) ? 'white' : '#555', fontSize: 14, fontWeight: 700,
+                    cursor: (email.trim() && email.includes('@')) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     transition: 'all 0.2s',
-                  }}
-                >
-                  <Briefcase size={18} />
-                  Conduct Interview
-                  <span style={{ fontSize: 11, fontWeight: 600, background: '#7c6fff40', color: '#a89eff', padding: '2px 7px', borderRadius: 99, border: '1px solid #7c6fff50' }}>
-                    NEW
-                  </span>
+                  }}>
+                  <Plus size={18} /> Create Workspace
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={() => setStep('join')}
+                  style={{
+                    flex: 1, padding: '14px 20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 14, color: '#cccccc', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  }}>
+                  <LogIn size={18} /> Join Workspace
                 </motion.button>
               </div>
+              {/* ── Interview Mode Button ── */}
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(124,111,255,0.5)' }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  if (!email.trim() || !email.includes('@')) {
+                    alert('Please enter your email first.');
+                    return;
+                  }
+                  setIsInterviewMode(true);
+                  handleCreateWorkspace();
+                }}
+                disabled={!email.trim() || !email.includes('@')}
+                style={{
+                  width: '100%', padding: '13px 20px',
+                  background: (email.trim() && email.includes('@'))
+                    ? 'linear-gradient(135deg, #7c6fff22, #5e4dff22)'
+                    : 'rgba(255,255,255,0.03)',
+                  border: (email.trim() && email.includes('@'))
+                    ? '1px solid #7c6fff60'
+                    : '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 14,
+                  color: (email.trim() && email.includes('@')) ? '#a89eff' : '#444',
+                  fontSize: 14, fontWeight: 700,
+                  cursor: (email.trim() && email.includes('@')) ? 'pointer' : 'not-allowed',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  transition: 'all 0.2s',
+                }}
+              >
+                <Briefcase size={18} />
+                Conduct Interview
+                <span style={{ fontSize: 11, fontWeight: 600, background: '#7c6fff40', color: '#a89eff', padding: '2px 7px', borderRadius: 99, border: '1px solid #7c6fff50' }}>
+                  NEW
+                </span>
+              </motion.button>
+            </div>
 
             {/* Stats */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}

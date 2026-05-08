@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "node server/server.js",
-    "start": "node server/yjs-server.js"
+    "start": "node server/server.js"
   },
   "dependencies": {
     "@hocuspocus/server": "^4.0.0",

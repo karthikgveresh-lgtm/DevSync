@@ -2,13 +2,34 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const { setupWSConnection } = require('y-websocket/bin/utils');
+const WebSocket = require('ws');
 
 const app = express();
 app.use(cors());
 
 const server = http.createServer(app);
 
-// Setup Socket.IO for chat and basic presence
+// ── Yjs WebSocket Setup ──────────────────────────────────────────────────
+const wss = new WebSocket.Server({ noServer: true });
+
+wss.on('connection', (conn, req) => {
+  setupWSConnection(conn, req, { gc: true });
+});
+
+// Handle the upgrade from HTTP to WebSocket for Yjs
+server.on('upgrade', (request, socket, head) => {
+  const { pathname } = new URL(request.url, `http://${request.headers.host}`);
+  
+  // Route /yjs to the Yjs server, others can be handled by Socket.io
+  if (pathname.startsWith('/yjs')) {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  }
+});
+
+// ── Socket.IO Setup ──────────────────────────────────────────────────────
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -30,20 +51,12 @@ function getAllConnectedClients(roomId) {
 }
 
 io.on('connection', (socket) => {
-  console.log('socket connected', socket.id);
-
   socket.on('join', ({ roomId, username }) => {
     userSocketMap[socket.id] = username;
     socket.join(roomId);
     const clients = getAllConnectedClients(roomId);
-    
-    // Notify others that a new user has joined
     clients.forEach(({ socketId }) => {
-      io.to(socketId).emit('joined', {
-        clients,
-        username,
-        socketId: socket.id,
-      });
+      io.to(socketId).emit('joined', { clients, username, socketId: socket.id });
     });
   });
 
@@ -54,32 +67,25 @@ io.on('connection', (socket) => {
   socket.on('disconnecting', () => {
     const rooms = [...socket.rooms];
     rooms.forEach((roomId) => {
-      socket.in(roomId).emit('disconnected', {
-        socketId: socket.id,
-        username: userSocketMap[socket.id],
-      });
+      socket.in(roomId).emit('disconnected', { socketId: socket.id, username: userSocketMap[socket.id] });
     });
   });
 
-  // WebRTC Signaling for Voice Call
+  // WebRTC Signaling
   socket.on('start-call', ({ roomId, username }) => {
     socket.in(roomId).emit('incoming-call', { caller: username, callerId: socket.id });
   });
-
   socket.on('webrtc-offer', ({ target, caller, sdp }) => {
     io.to(target).emit('webrtc-offer', { caller, callerId: socket.id, sdp });
   });
-
   socket.on('webrtc-answer', ({ target, sdp }) => {
     io.to(target).emit('webrtc-answer', { responderId: socket.id, sdp });
   });
-
   socket.on('webrtc-ice-candidate', ({ target, candidate }) => {
     io.to(target).emit('webrtc-ice-candidate', { senderId: socket.id, candidate });
   });
 
   socket.on('join-call', ({ roomId }) => {
-    // Tell everyone else in the call that someone new joined so they can initiate an offer
     socket.in(roomId).emit('user-joined-call', { userId: socket.id });
   });
 
@@ -89,7 +95,6 @@ io.on('connection', (socket) => {
 
   // Security & Authorization Events
   socket.on('request-join', ({ roomId, username }) => {
-    // Send request to everyone in the room (only host will handle it)
     socket.in(roomId).emit('join-request', { username, socketId: socket.id });
   });
 
@@ -103,7 +108,6 @@ io.on('connection', (socket) => {
 
   socket.on('update-permissions', ({ roomId, targetSocketId, role }) => {
     io.to(targetSocketId).emit('permission-updated', { role });
-    // Broadcast to others so they can update UI indicators
     socket.in(roomId).emit('user-permission-changed', { socketId: targetSocketId, role });
   });
 
@@ -113,4 +117,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 5005;
-server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+server.listen(PORT, () => console.log(`Unified Server listening on port ${PORT}`));
