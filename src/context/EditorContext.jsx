@@ -67,8 +67,8 @@ export const EditorProvider = ({ children, template }) => {
             if (!isDir) {
               if (ext === 'html') content = `<h1>Welcome to ${template.name}!</h1>\n<p>Start collaborating!</p>`;
               else if (ext === 'css') content = `/* Styles for ${template.name} */\nbody {\n  font-family: sans-serif;\n}`;
-              else if (ext === 'py') content = `# ${template.name}\nprint("DevSync Initialized!")\n`;
-              else if (ext === 'js') content = `// ${template.name}\nconsole.log("DevSync Initialized!");\n`;
+              else if (ext === 'py') content = `# ${template.name}\nprint("TeamKode Initialized!")\n`;
+              else if (ext === 'js') content = `// ${template.name}\nconsole.log("TeamKode Initialized!");\n`;
               else if (ext === 'json') content = `{\n  "name": "${template.name.replace(/\s+/g, '-').toLowerCase()}"\n}\n`;
               else content = `# ${name}\n`;
             }
@@ -88,8 +88,8 @@ export const EditorProvider = ({ children, template }) => {
           const workspaceName = template ? template.name.replace(/\s+/g, '_').toLowerCase() : 'workspace';
           defaultFiles = [
             { id: 'root_folder', name: workspaceName, type: 'folder', isFolder: true, isOpen: true, parentId: null },
-            { id: '1', name: 'index.html', type: 'html', content: `<h1>Hello ${template ? template.name : 'DevSync'}</h1>`, isFolder: false, parentId: 'root_folder' },
-            { id: '2', name: 'script.py', type: 'python', content: 'print("DevSync Initialized")', isFolder: false, parentId: 'root_folder' }
+            { id: '1', name: 'index.html', type: 'html', content: `<h1>Hello ${template ? template.name : 'TeamKode'}</h1>`, isFolder: false, parentId: 'root_folder' },
+            { id: '2', name: 'script.py', type: 'python', content: 'print("TeamKode Initialized")', isFolder: false, parentId: 'root_folder' }
           ];
         }
         

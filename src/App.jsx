@@ -19,7 +19,7 @@ import { VideoCallModal } from './components/Modals/VideoCallModal';
 import { useWebRTC } from './hooks/useWebRTC';
 import { BookOpen, StickyNote } from 'lucide-react';
 
-const DevSyncApp = ({ isInterviewMode }) => {
+const TeamKodeApp = ({ isInterviewMode }) => {
   const {
     contextMenu, setContextMenu, isSidebarOpen,
     isBottomPanelOpen, files, emitFileSystemUpdate,
@@ -401,7 +401,7 @@ const ProtectedContent = ({ session }) => {
 
   return (
     <EditorProvider template={session.template}>
-      <DevSyncApp isInterviewMode={session.isInterviewMode} />
+      <TeamKodeApp isInterviewMode={session.isInterviewMode} />
     </EditorProvider>
   );
 };

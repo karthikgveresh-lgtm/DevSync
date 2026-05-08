@@ -4,7 +4,7 @@ import { useEditor } from '../../context/EditorContext';
 import { useCollaboration } from '../../context/CollaborationContext';
 import { executeCode } from '../../utils/compiler';
 
-const PROMPT = 'devsync@workspace:~$ ';
+const PROMPT = 'teamkode@workspace:~$ ';
 
 const createWelcomeLines = () => [
   { type: 'system', text: '  ____              ____                   ' },
@@ -14,7 +14,7 @@ const createWelcomeLines = () => [
   { type: 'system', text: ' |____/ \\___| \\_/  |_|    \\__, |_| |_|\\___|' },
   { type: 'system', text: '                           |___/             ' },
   { type: 'blank', text: '' },
-  { type: 'info', text: '  🚀 DevSync Terminal v2.0 — Collaborative IDE Shell' },
+  { type: 'info', text: '  🚀 TeamKode Terminal v2.0 — Collaborative IDE Shell' },
   { type: 'info', text: '  Type "help" for available commands or "run" to execute the active file.' },
   { type: 'blank', text: '' },
 ];
