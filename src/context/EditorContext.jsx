@@ -53,23 +53,28 @@ export const EditorProvider = ({ children, template }) => {
       if (filesArray.length === 0) {
         // Initialize default files if room is empty based on selected template
         let defaultFiles = [];
-        if (template && template.files && template.files.length > 0) {
-          defaultFiles.push({ id: 'root_folder', name: template.name.replace(/\s+/g, '_').toLowerCase(), type: 'folder', isFolder: true, isOpen: true, parentId: null });
+        const activeTemplate = template || { 
+          name: 'TeamKode Workspace', 
+          files: ['main.py', 'README.md'] 
+        };
+
+        if (activeTemplate.files && activeTemplate.files.length > 0) {
+          defaultFiles.push({ id: 'root_folder', name: activeTemplate.name.replace(/\s+/g, '_').toLowerCase(), type: 'folder', isFolder: true, isOpen: true, parentId: null });
           
-          template.files.forEach((fileOrDir, index) => {
+          activeTemplate.files.forEach((fileOrDir, index) => {
             const isDir = fileOrDir.endsWith('/');
             const name = isDir ? fileOrDir.slice(0, -1) : fileOrDir;
             const ext = name.split('.').pop() || 'txt';
-            const typeMap = { js: 'javascript', py: 'python', cpp: 'cpp', java: 'java', html: 'html', css: 'css', md: 'markdown', csv: 'csv', json: 'json' };
+            const typeMap = { js: 'javascript', py: 'python', cpp: 'cpp', java: 'java', html: 'html', css: 'css', md: 'markdown', csv: 'csv', json: 'json', ipynb: 'python' };
             const type = isDir ? 'folder' : (typeMap[ext] || ext);
             
             let content = '';
             if (!isDir) {
-              if (ext === 'html') content = `<h1>Welcome to ${template.name}!</h1>\n<p>Start collaborating!</p>`;
-              else if (ext === 'css') content = `/* Styles for ${template.name} */\nbody {\n  font-family: sans-serif;\n}`;
-              else if (ext === 'py') content = `# ${template.name}\nprint("TeamKode Initialized!")\n`;
-              else if (ext === 'js') content = `// ${template.name}\nconsole.log("TeamKode Initialized!");\n`;
-              else if (ext === 'json') content = `{\n  "name": "${template.name.replace(/\s+/g, '-').toLowerCase()}"\n}\n`;
+              if (ext === 'html') content = `<h1>Welcome to ${activeTemplate.name}!</h1>\n<p>Start collaborating!</p>`;
+              else if (ext === 'css') content = `/* Styles for ${activeTemplate.name} */\nbody {\n  font-family: sans-serif;\n}`;
+              else if (ext === 'py' || ext === 'ipynb') content = `# ${activeTemplate.name}\nprint("TeamKode Initialized!")\n`;
+              else if (ext === 'js') content = `// ${activeTemplate.name}\nconsole.log("TeamKode Initialized!");\n`;
+              else if (ext === 'json') content = `{\n  "name": "${activeTemplate.name.replace(/\s+/g, '-').toLowerCase()}"\n}\n`;
               else content = `# ${name}\n`;
             }
 
@@ -83,14 +88,6 @@ export const EditorProvider = ({ children, template }) => {
               parentId: 'root_folder'
             });
           });
-        } else {
-          // Fallback if no template or empty template (e.g. custom workspace)
-          const workspaceName = template ? template.name.replace(/\s+/g, '_').toLowerCase() : 'workspace';
-          defaultFiles = [
-            { id: 'root_folder', name: workspaceName, type: 'folder', isFolder: true, isOpen: true, parentId: null },
-            { id: '1', name: 'index.html', type: 'html', content: `<h1>Hello ${template ? template.name : 'TeamKode'}</h1>`, isFolder: false, parentId: 'root_folder' },
-            { id: '2', name: 'script.py', type: 'python', content: 'print("TeamKode Initialized")', isFolder: false, parentId: 'root_folder' }
-          ];
         }
         
         ydoc.transact(() => {
