@@ -48,7 +48,9 @@ export const EditorArea = () => {
     return map[ext] || 'plaintext';
   };
 
-  const handleEditorMount = (editor) => {
+  let completionProviderRef = useRef(null);
+
+  const handleEditorMount = (editor, monaco) => {
     editorRef.current = editor;
     
     // Set readOnly based on role
@@ -67,7 +69,48 @@ export const EditorArea = () => {
       new Set([editor]),
       awareness
     );
+
+    // ── DevSync AI: Inline Autocomplete (Ghost Text) ──
+    if (!completionProviderRef.current) {
+      completionProviderRef.current = monaco.languages.registerInlineCompletionsProvider('*', {
+        provideInlineCompletions: async (model, position, context, token) => {
+          const lineContent = model.getLineContent(position.lineNumber);
+          const word = model.getWordUntilPosition(position);
+          
+          // Hackathon AI Mock logic:
+          let suggestion = '';
+          
+          if (lineContent.trim() === 'function calculate') {
+            suggestion = 'Total(price, tax) {\n  return price + (price * tax);\n}';
+          } else if (lineContent.trim() === 'import React') {
+            suggestion = " from 'react';\nimport { useState } from 'react';";
+          } else if (lineContent.trim() === '// fetch user') {
+            suggestion = "\nconst fetchUser = async (id) => {\n  const res = await fetch(`/api/users/${id}`);\n  return res.json();\n};";
+          } else if (lineContent.endsWith('console.')) {
+            suggestion = "log('DevSync AI Autocomplete works!');";
+          } else {
+            return { items: [] };
+          }
+
+          return {
+            items: [{
+              insertText: suggestion,
+              range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column)
+            }]
+          };
+        },
+        freeInlineCompletions: () => {}
+      });
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      if (completionProviderRef.current) {
+        completionProviderRef.current.dispose();
+      }
+    };
+  }, []);
 
   return (
     <div
@@ -172,11 +215,37 @@ export const EditorArea = () => {
           </div>
         )}
       </div>
-      {/* Hide cursors of viewers */}
+      {/* Dynamic Cursor Styles */}
       <style>
-        {awarenessUsers && awarenessUsers.filter(u => u.role === 'viewer').map(u => (
-          `.yRemoteSelection-${u.clientId}, .yRemoteSelectionHead-${u.clientId} { display: none !important; }`
-        )).join('\n')}
+        {awarenessUsers && awarenessUsers.map(u => {
+          if (u.role === 'viewer') {
+            return `.yRemoteSelection-${u.clientId}, .yRemoteSelectionHead-${u.clientId} { display: none !important; }`;
+          }
+          
+          return `
+            .yRemoteSelection-${u.clientId} {
+              background-color: ${u.color}40 !important;
+            }
+            .yRemoteSelectionHead-${u.clientId} {
+              border-color: ${u.color} !important;
+            }
+            /* Inline phantom text like GitLens */
+            .yRemoteSelectionHead-${u.clientId}::after {
+              content: "  ${u.name}, just now • Live session";
+              position: absolute;
+              left: 4px;
+              top: 0;
+              color: ${u.color};
+              font-size: 13px;
+              font-style: italic;
+              font-family: 'Consolas', 'Courier New', monospace;
+              white-space: nowrap;
+              pointer-events: none;
+              z-index: 99;
+              opacity: 0.4; /* Made lighter as requested */
+            }
+          `;
+        }).join('\n')}
       </style>
     </div>
   );

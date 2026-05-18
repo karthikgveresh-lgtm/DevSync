@@ -20,9 +20,14 @@ const DEFAULT_WORKSPACES = [
   { name: 'API Backend', icon: '🔧', files: ['server.js', 'routes/', 'models/'] },
 ];
 
+// Strict email validator — must have a real TLD (e.g., .com, .org, .in)
+// Strict email validator — only @gmail.com is accepted
+const isValidEmail = (val) => /^[a-zA-Z0-9._%+\-]+@gmail\.com$/.test(val.trim());
+
 export const LandingPage = ({ onEnter }) => {
   const [step, setStep] = useState('home'); // home | create-name | create-workspace | create-link | join
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [workspaceName, setWorkspaceName] = useState('');
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
   const [roomId, setRoomId] = useState('');
@@ -49,10 +54,11 @@ export const LandingPage = ({ onEnter }) => {
   }, []);
 
   const handleCreateWorkspace = () => {
-    if (!email.trim() || !email.includes('@')) {
-      alert("Please enter a valid email address.");
+    if (!isValidEmail(email)) {
+      setEmailError('Only Gmail addresses are allowed (e.g. yourname@gmail.com)');
       return;
     }
+    setEmailError('');
     // Only set interview mode if user explicitly clicked the interview button
     // (isInterviewMode is toggled externally before this is called in that path)
     setStep('create-workspace');
@@ -83,6 +89,8 @@ export const LandingPage = ({ onEnter }) => {
   const [isInterviewMode, setIsInterviewMode] = useState(false);
 
   const handleLaunchIDE = () => {
+    // Save host status to localStorage so they can refresh the page and rejoin without being blocked
+    localStorage.setItem(`host_${roomId}`, email);
     onEnter({ roomId, email, template: selectedWorkspace, isHost: true, isInterviewMode });
   };
 
@@ -99,7 +107,16 @@ export const LandingPage = ({ onEnter }) => {
       parsedRoom = url.searchParams.get('room') || parsedRoom;
       if (url.searchParams.get('interview') === '1') parsedIsInterview = true;
     } catch (_) { }
-    onEnter({ roomId: parsedRoom, email: joinEmail.trim(), isHost: false, isInterviewMode: parsedIsInterview });
+
+    // Check if this user was the host previously (to prevent access blocked on refresh)
+    const isReturningHost = localStorage.getItem(`host_${parsedRoom}`) === joinEmail.trim();
+
+    onEnter({ 
+      roomId: parsedRoom, 
+      email: joinEmail.trim(), 
+      isHost: isReturningHost, 
+      isInterviewMode: parsedIsInterview 
+    });
   };
 
   const particles = Array.from({ length: 20 }).map((_, i) => ({
@@ -147,12 +164,12 @@ export const LandingPage = ({ onEnter }) => {
           <motion.div key="home"
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }}
             transition={{ duration: 0.5 }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40, maxWidth: 480, width: '90%', textAlign: 'center' }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, maxWidth: 480, width: '90%', textAlign: 'center' }}
           >
             {/* Logo */}
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}>
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }} style={{ marginBottom: -8 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 200, objectFit: 'contain' }} />
+                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 260, objectFit: 'contain' }} />
               </div>
             </motion.div>
 
@@ -169,28 +186,38 @@ export const LandingPage = ({ onEnter }) => {
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError('');
+                }}
                 onKeyDown={e => e.key === 'Enter' && handleCreateWorkspace()}
                 placeholder="Enter your email to get started..."
                 style={{
-                  width: '100%', padding: '14px 20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+                  width: '100%', padding: '14px 20px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: `1px solid ${emailError ? '#ef4444' : 'rgba(255,255,255,0.12)'}`,
                   borderRadius: 12, color: 'white', fontSize: 16, outline: 'none', boxSizing: 'border-box',
                   transition: 'border-color 0.2s',
                 }}
-                onFocus={e => e.target.style.borderColor = '#007acc'}
-                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
+                onFocus={e => e.target.style.borderColor = emailError ? '#ef4444' : '#007acc'}
+                onBlur={e => e.target.style.borderColor = emailError ? '#ef4444' : 'rgba(255,255,255,0.12)'}
               />
+              {emailError && (
+                <div style={{ color: '#ef4444', fontSize: 12, marginTop: 6, textAlign: 'left', paddingLeft: 4 }}>
+                  ⚠ {emailError}
+                </div>
+              )}
             </motion.div>
 
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: 12, width: '100%', flexDirection: 'column' }}>
               <div style={{ display: 'flex', gap: 12, width: '100%' }}>
                 <motion.button whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(0,122,204,0.5)' }} whileTap={{ scale: 0.97 }}
-                  onClick={() => { setIsInterviewMode(false); handleCreateWorkspace(); }} disabled={!email.trim() || !email.includes('@')}
+                  onClick={() => { setIsInterviewMode(false); handleCreateWorkspace(); }} disabled={!email.trim() || !isValidEmail(email)}
                   style={{
-                    flex: 1, padding: '14px 20px', background: (email.trim() && email.includes('@')) ? 'linear-gradient(135deg, #007acc, #0062a3)' : 'rgba(255,255,255,0.05)',
-                    border: 'none', borderRadius: 14, color: (email.trim() && email.includes('@')) ? 'white' : '#555', fontSize: 14, fontWeight: 700,
-                    cursor: (email.trim() && email.includes('@')) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    flex: 1, padding: '14px 20px', background: isValidEmail(email) ? 'linear-gradient(135deg, #007acc, #0062a3)' : 'rgba(255,255,255,0.05)',
+                    border: 'none', borderRadius: 14, color: isValidEmail(email) ? 'white' : '#555', fontSize: 14, fontWeight: 700,
+                    cursor: isValidEmail(email) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     transition: 'all 0.2s',
                   }}>
                   <Plus size={18} /> Create Workspace

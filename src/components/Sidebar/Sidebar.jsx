@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCollaboration } from '../../context/CollaborationContext';
 import { SearchSidebar } from './SearchSidebar';
 import { ExtensionsSidebar } from './ExtensionsSidebar';
+import { AiCopilotSidebar } from './AiCopilotSidebar';
 import { getFileIcon } from '../../utils/fileIcons';
 
 export const Sidebar = () => {
@@ -200,6 +201,8 @@ export const Sidebar = () => {
         return <SearchSidebar />;
       case 'extensions':
         return <ExtensionsSidebar />;
+      case 'ai':
+        return <AiCopilotSidebar />;
       case 'explorer':
         return (
           <div className="flex flex-col h-full overflow-hidden">
@@ -355,7 +358,9 @@ export const Sidebar = () => {
   return (
     <div className="sidebar bg-(--vscode-sidebar) border-r border-(--vscode-border) flex flex-col h-full overflow-hidden">
       <div className="px-4 py-3 text-[11px] uppercase tracking-wider text-[#cccccc]">
-        {activeSidebarTab === 'explorer' ? 'Explorer' : activeSidebarTab === 'search' ? 'Search' : 'Chat'}
+        {activeSidebarTab === 'explorer' ? 'Explorer' : 
+         activeSidebarTab === 'search' ? 'Search' : 
+         activeSidebarTab === 'ai' ? 'DevSync AI' : 'Chat'}
       </div>
       {renderContent()}
     </div>

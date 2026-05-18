@@ -316,6 +316,8 @@ const TeamKodeApp = ({ isInterviewMode }) => {
   );
 };
 
+import { ExtensionProvider } from './context/ExtensionContext';
+
 const ProtectedContent = ({ session }) => {
   const { isAuthorized, setIsAuthorized, isHost, setIsHost, userRole, setUserRole } = useAuth();
   const { ydoc, awareness } = useCollaboration();
@@ -401,7 +403,9 @@ const ProtectedContent = ({ session }) => {
 
   return (
     <EditorProvider template={session.template}>
-      <TeamKodeApp isInterviewMode={session.isInterviewMode} />
+      <ExtensionProvider>
+        <TeamKodeApp isInterviewMode={session.isInterviewMode} />
+      </ExtensionProvider>
     </EditorProvider>
   );
 };

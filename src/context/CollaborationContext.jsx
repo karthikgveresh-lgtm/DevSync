@@ -16,14 +16,13 @@ export const CollaborationProvider = ({ children, roomId, email }) => {
   // The shared file system tree. Keys are file IDs, values are file objects.
   const sharedFiles = useMemo(() => ydoc.getMap('files'), [ydoc]);
 
-  // Generate deterministic color based on email string
+  // Generate deterministic HEX color based on email string
   const getColorForEmail = (emailStr) => {
-    let hash = 0;
-    for (let i = 0; i < emailStr.length; i++) {
-      hash = emailStr.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const h = Math.abs(hash) % 360;
-    return `hsl(${h}, 80%, 65%)`; // Light, vibrant colors suitable for dark themes
+    return randomColor({
+      seed: emailStr,
+      luminosity: 'light',
+      format: 'hex'
+    });
   };
 
   useEffect(() => {

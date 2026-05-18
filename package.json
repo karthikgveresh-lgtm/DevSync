@@ -14,7 +14,10 @@
   "dependencies": {
     "@hocuspocus/server": "^4.0.0",
     "@monaco-editor/react": "^4.7.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "framer-motion": "^12.38.0",
+    "level": "^10.0.0",
     "lucide-react": "^1.14.0",
     "randomcolor": "^0.6.2",
     "react": "^19.2.5",
@@ -23,11 +26,10 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.3",
     "ws": "^8.20.0",
+    "y-leveldb": "^0.2.0",
     "y-monaco": "^0.1.6",
     "y-websocket": "^1.5.0",
-    "yjs": "^13.6.30",
-    "express": "^4.21.2",
-    "cors": "^2.8.5"
+    "yjs": "^13.6.30"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

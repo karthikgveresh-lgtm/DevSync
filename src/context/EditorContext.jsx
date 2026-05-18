@@ -30,7 +30,12 @@ export const EditorProvider = ({ children, template }) => {
     if (!awareness) return;
     const updateAwarenessUsers = () => {
       const users = Array.from(awareness.getStates().entries())
-        .map(([clientId, state]) => ({ ...state.user, socketId: state.socketId, clientId }))
+        .map(([clientId, state]) => ({ 
+          ...state.user, 
+          socketId: state.socketId, 
+          clientId,
+          cursor: state.cursor 
+        }))
         .filter(user => user && user.name);
       setAwarenessUsers(users);
     };

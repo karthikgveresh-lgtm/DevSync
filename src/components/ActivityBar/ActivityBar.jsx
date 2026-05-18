@@ -1,5 +1,5 @@
 import React from 'react';
-import { Files, Search, Blocks, MessageSquare, Phone, Video, User as UserIcon, Settings } from 'lucide-react';
+import { Files, Search, Blocks, MessageSquare, Bot, Phone, Video, User as UserIcon, Settings } from 'lucide-react';
 import { useEditor } from '../../context/EditorContext';
 import { motion } from 'framer-motion';
 
@@ -26,6 +26,7 @@ export const ActivityBar = () => {
       <Search onClick={() => setActiveSidebarTab('search')} className={iconClass('search')} size={24} strokeWidth={1.5} />
       <Blocks onClick={() => setActiveSidebarTab('extensions')} className={iconClass('extensions')} size={24} strokeWidth={1.5} />
       <MessageSquare onClick={() => setActiveSidebarTab('chat')} className={iconClass('chat')} size={24} strokeWidth={1.5} />
+      <Bot onClick={() => setActiveSidebarTab('ai')} className={iconClass('ai')} size={24} strokeWidth={1.5} />
 
       {/* ── Voice Call ── */}
       <div className="relative">

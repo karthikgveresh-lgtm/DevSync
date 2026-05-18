@@ -173,25 +173,16 @@ html, body, #root {
   background: transparent;
 }
 
-/* Yjs Monaco Remote Cursor Styling */
+/* Yjs Monaco Remote Cursor Base Styling */
 .yRemoteSelection {
-  background-color: rgba(250, 129, 0, 0.4);
+  /* Dynamic color applied via EditorArea.jsx */
 }
 
 .yRemoteSelectionHead {
   position: absolute;
-  border-left: orange solid 2px;
-  border-top: orange solid 2px;
-  border-bottom: orange solid 2px;
+  border-left: solid 2px;
+  border-top: solid 2px;
+  border-bottom: solid 2px;
   height: 100%;
   box-sizing: border-box;
-}
-
-.yRemoteSelectionHead::after {
-  position: absolute;
-  content: ' ';
-  border: 3px solid orange;
-  border-radius: 4px;
-  left: -4px;
-  top: -5px;
 }
