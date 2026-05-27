@@ -10,6 +10,10 @@ export default defineConfig({
   ],
   server: {
     allowedHosts: true,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    },
     proxy: {
       '/yjs': {
         target: 'ws://localhost:1234',

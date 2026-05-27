@@ -1,9 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Sparkles, Code2, AlertCircle } from 'lucide-react';
+import { Bot, Send, Sparkles, Code2, AlertCircle, Key, Check } from 'lucide-react';
 import { useEditor } from '../../context/EditorContext';
 
 export const AiCopilotSidebar = () => {
   const { files, activeFileId, handleEditorChange } = useEditor();
+  const [apiKey, setApiKey] = useState(localStorage.getItem('devsync_gemini_key') || '');
+  const [showKeyInput, setShowKeyInput] = useState(!localStorage.getItem('devsync_gemini_key'));
+  const [keyInput, setKeyInput] = useState(apiKey);
+  
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Hi! I am DevSync AI. I can read your workspace, find bugs, and write code for you. What do you need help with?' }
   ]);
@@ -21,31 +25,53 @@ export const AiCopilotSidebar = () => {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleSend = () => {
+  const saveApiKey = () => {
+    if (keyInput.trim()) {
+      localStorage.setItem('devsync_gemini_key', keyInput.trim());
+      setApiKey(keyInput.trim());
+      setShowKeyInput(false);
+    }
+  };
+
+  const handleSend = async () => {
     if (!input.trim()) return;
+    if (!apiKey) {
+      setShowKeyInput(true);
+      return;
+    }
     
     const userMessage = input.trim();
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setInput('');
     setIsTyping(true);
 
-    // Simulated AI response for the hackathon prototype
-    setTimeout(() => {
-      let aiResponse = "I'm analyzing your request...";
+    try {
+      const fileContext = activeFile ? `Context: You are helping the user edit the file named '${activeFile.name}'.\nThe current file content is:\n\`\`\`\n${activeFile.content}\n\`\`\`\n\n` : '';
+      const prompt = `${fileContext}User's request: ${userMessage}\n\nPlease provide a clear, concise, and helpful response. If providing code, use markdown code blocks.`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      const data = await response.json();
       
-      if (userMessage.toLowerCase().includes('fix') || userMessage.toLowerCase().includes('bug')) {
-        aiResponse = `I looked at \`${activeFile?.name || 'your code'}\` and found a potential issue. Try wrapping that logic in a try-catch block to handle the error properly.`;
-      } else if (userMessage.toLowerCase().includes('explain')) {
-        aiResponse = `In \`${activeFile?.name || 'this file'}\`, you are using React hooks to manage state. The useEffect hook ensures that your component re-renders when dependencies change.`;
-      } else if (userMessage.toLowerCase().includes('generate') || userMessage.toLowerCase().includes('create')) {
-        aiResponse = `Here is the generated boilerplate for \`${activeFile?.name || 'the component'}\`. I've added a basic structure using TailwindCSS.`;
-      } else {
-        aiResponse = `I've analyzed the workspace context. You are currently editing \`${activeFile?.name || 'a file'}\`. How can I help you write this better?`;
+      if (data.error) {
+        throw new Error(data.error.message || 'API Error');
       }
 
+      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't generate a response.";
       setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+
+    } catch (error) {
+      console.error(error);
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ Error: ${error.message}. Please check your API key and try again.` }]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -53,10 +79,37 @@ export const AiCopilotSidebar = () => {
       <div className="px-4 py-2 flex items-center gap-2 border-b border-[#3c3c3c]">
         <Bot size={16} className="text-[#a89eff]" />
         <span className="uppercase text-[11px] font-semibold text-[#858585]">DevSync Copilot</span>
-        <span className="ml-auto text-[9px] bg-[#7c6fff20] text-[#a89eff] px-1.5 py-0.5 rounded border border-[#7c6fff40]">
-          BETA
-        </span>
+        <button 
+          onClick={() => setShowKeyInput(!showKeyInput)}
+          className="ml-auto text-[10px] text-[#858585] hover:text-white flex items-center gap-1"
+        >
+          <Key size={12} /> API Key
+        </button>
       </div>
+
+      {showKeyInput && (
+        <div className="p-3 bg-[#2d2d2d] border-b border-[#3c3c3c] text-[12px]">
+          <div className="mb-2 text-[#cccccc]">Enter your free Google Gemini API Key to enable real AI responses.</div>
+          <div className="flex gap-2">
+            <input 
+              type="password"
+              value={keyInput}
+              onChange={e => setKeyInput(e.target.value)}
+              placeholder="AIzaSy..."
+              className="flex-1 bg-[#1e1e1e] border border-[#3c3c3c] focus:border-[#007acc] outline-none px-2 py-1 rounded text-white"
+            />
+            <button 
+              onClick={saveApiKey}
+              className="bg-[#007acc] hover:bg-[#005f9e] text-white px-2 py-1 rounded flex items-center gap-1"
+            >
+              <Check size={14} /> Save
+            </button>
+          </div>
+          <div className="mt-2 text-[10px] text-[#858585]">
+            Get a free key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" className="text-[#007acc] hover:underline">Google AI Studio</a>.
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {messages.map((msg, idx) => (
@@ -66,7 +119,7 @@ export const AiCopilotSidebar = () => {
                    style={{ background: msg.role === 'user' ? '#0e639c' : '#333' }}>
                 {msg.role === 'user' ? <span className="text-[10px] text-white font-bold">U</span> : <Sparkles size={12} className="text-[#a89eff]" />}
               </div>
-              <div className={`px-3 py-2 text-[13px] rounded-lg shadow-sm ${
+              <div className={`px-3 py-2 text-[13px] rounded-lg shadow-sm whitespace-pre-wrap ${
                 msg.role === 'user' 
                   ? 'bg-[#0e639c] text-white rounded-tr-sm' 
                   : 'bg-[#2d2d2d] text-[#cccccc] border border-[#3c3c3c] rounded-tl-sm'
@@ -106,7 +159,7 @@ export const AiCopilotSidebar = () => {
                 handleSend();
               }
             }}
-            placeholder="Ask DevSync AI..."
+            placeholder={apiKey ? "Ask DevSync AI..." : "Enter API Key above first..."}
             className="w-full bg-transparent border-none outline-none text-[13px] text-white px-2 py-1.5 resize-none min-h-[36px] max-h-[120px]"
             rows={1}
           />
