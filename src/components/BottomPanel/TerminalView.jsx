@@ -69,8 +69,9 @@ export const TerminalView = () => {
         shellProcessRef.current = shellProcess;
 
         // Pipe xterm output to shell process input
+        const inputWriter = shellProcess.input.getWriter();
         const inputListener = term.onData((data) => {
-          shellProcess.input.write(data);
+          inputWriter.write(data);
         });
 
         // Pipe shell process output to xterm

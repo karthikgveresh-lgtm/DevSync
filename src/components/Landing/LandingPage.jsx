@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Code2, Users, Plus, LogIn, Copy, Check, ArrowRight, Folder, X, Zap, Briefcase } from 'lucide-react';
 
@@ -35,6 +35,83 @@ export const LandingPage = ({ onEnter }) => {
   const [copied, setCopied] = useState(false);
   const [joinInput, setJoinInput] = useState('');
   const [joinEmail, setJoinEmail] = useState('');
+
+  const videoRef = useRef(null);
+
+  // Background Video custom JS-controlled fade loop
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let animationFrameId;
+    let timeoutId;
+
+    const updateOpacity = () => {
+      if (!video) return;
+      const currentTime = video.currentTime;
+      const duration = video.duration;
+
+      if (duration && !isNaN(duration) && duration > 0) {
+        const fadeInDuration = 0.5; // 0.5s fade-in
+        const fadeOutDuration = 0.5; // 0.5s fade-out
+        let opacity = 1;
+
+        if (currentTime < fadeInDuration) {
+          opacity = currentTime / fadeInDuration;
+        } else if (currentTime > duration - fadeOutDuration) {
+          opacity = (duration - currentTime) / fadeOutDuration;
+        } else {
+          opacity = 1;
+        }
+
+        opacity = Math.max(0, Math.min(1, opacity));
+        video.style.opacity = opacity.toString();
+      } else {
+        video.style.opacity = '0';
+      }
+
+      animationFrameId = requestAnimationFrame(updateOpacity);
+    };
+
+    const handlePlay = () => {
+      animationFrameId = requestAnimationFrame(updateOpacity);
+    };
+
+    const handlePause = () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+
+    const handleEnded = () => {
+      cancelAnimationFrame(animationFrameId);
+      if (video) {
+        video.style.opacity = '0';
+      }
+      
+      // On ended, opacity resets to 0, waits 100ms, then replays from 0
+      timeoutId = setTimeout(() => {
+        if (!video) return;
+        video.currentTime = 0;
+        video.play().catch(err => console.log('Video play error on ended loop:', err));
+      }, 100);
+    };
+
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleEnded);
+
+    // Initial play trigger
+    video.play().catch(err => console.log('Video play block:', err));
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      clearTimeout(timeoutId);
+      if (video) {
+        video.removeEventListener('play', handlePlay);
+        video.removeEventListener('pause', handlePause);
+        video.removeEventListener('ended', handleEnded);
+      }
+    };
+  }, []);
 
   // Check if joining from a shared link (e.g. ?room=xxx&interview=1)
   useEffect(() => {
@@ -130,32 +207,65 @@ export const LandingPage = ({ onEnter }) => {
 
   return (
     <div style={{
-      minHeight: '100vh', width: '100vw', background: 'linear-gradient(135deg, #0d0d1a 0%, #111827 50%, #0d1421 100%)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      fontFamily: "'Segoe UI', sans-serif", overflow: 'hidden', position: 'relative'
+      minHeight: '100vh',
+      width: '100vw',
+      backgroundColor: 'hsl(var(--background))',
+      color: 'hsl(var(--foreground))',
+      fontFamily: '"Geist Sans", sans-serif',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      position: 'relative'
     }}>
-      {/* Animated background particles */}
-      {particles.map(p => (
-        <motion.div key={p.id} style={{
-          position: 'absolute', left: `${p.x}%`, top: `${p.y}%`,
-          width: p.size, height: p.size, borderRadius: '50%',
-          background: 'rgba(0, 122, 204, 0.4)', pointerEvents: 'none'
+      {/* Background Video */}
+      <video
+        ref={videoRef}
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_065045_c44942da-53c6-4804-b734-f9e07fc22e08.mp4"
+        crossOrigin="anonymous"
+        muted
+        playsInline
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0,
+          opacity: 0,
+          pointerEvents: 'none'
         }}
-          animate={{ y: [0, -30, 0], opacity: [0.2, 0.7, 0.2] }}
-          transition={{ duration: p.duration, repeat: Infinity, delay: p.delay, ease: 'easeInOut' }}
-        />
-      ))}
+      />
 
-      {/* Glowing grid background */}
+      {/* Blurred overlay shape */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '984px',
+          height: '527px',
+          opacity: 0.90,
+          backgroundColor: '#030712', // bg-gray-950
+          filter: 'blur(82px)',
+          pointerEvents: 'none',
+          zIndex: 5
+        }}
+      />
+
+      {/* Hero Content Wrapper */}
       <div style={{
-        position: 'absolute', inset: 0, backgroundImage:
-          'linear-gradient(rgba(0,122,204,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,122,204,0.04) 1px, transparent 1px)',
-        backgroundSize: '60px 60px', pointerEvents: 'none'
-      }} />
-
-      {/* Glow orbs */}
-      <div style={{ position: 'absolute', top: '10%', left: '15%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,122,204,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: '15%', right: '10%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        position: 'relative',
+        zIndex: 10,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'visible'
+      }}>
 
       <AnimatePresence mode="wait">
 
@@ -164,18 +274,18 @@ export const LandingPage = ({ onEnter }) => {
           <motion.div key="home"
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }}
             transition={{ duration: 0.5 }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, maxWidth: 480, width: '90%', textAlign: 'center' }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, maxWidth: 480, width: '90%', textAlign: 'center' }}
           >
             {/* Logo */}
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }} style={{ marginBottom: -8 }}>
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }} style={{ marginBottom: -48 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 260, objectFit: 'contain' }} />
+                <img src="/logo.png" alt="TeamKode Logo" style={{ height: 280, objectFit: 'contain' }} />
               </div>
             </motion.div>
 
             {/* Headline */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-              <div style={{ fontSize: 20, color: '#94a3b8', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 20, color: 'hsl(var(--hero-sub))', lineHeight: 1.6, fontFamily: '"General Sans", sans-serif' }}>
                 Code together, in real-time. <br />
                 <span style={{ color: '#007acc', fontWeight: 600 }}>Multi-cursor. Live Preview. Zero lag.</span>
               </div>
@@ -291,8 +401,8 @@ export const LandingPage = ({ onEnter }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button onClick={handleGoHome} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: 4 }}><X size={20} /></button>
               <div>
-                <div style={{ fontSize: 24, fontWeight: 800, color: 'white' }}>Choose a Workspace</div>
-                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Select a project folder to start your session, <span style={{ color: '#007acc' }}>{email}</span></div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: 'white', fontFamily: '"General Sans", sans-serif' }}>Choose a Workspace</div>
+                <div style={{ fontSize: 13, color: 'hsl(var(--hero-sub))', marginTop: 4 }}>Select a project folder to start your session, <span style={{ color: '#007acc' }}>{email}</span></div>
               </div>
             </div>
 
@@ -354,8 +464,8 @@ export const LandingPage = ({ onEnter }) => {
             </motion.div>
 
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: 'white' }}>Your workspace is ready! 🎉</div>
-              <div style={{ fontSize: 14, color: '#64748b', marginTop: 8 }}>Share the link below with your collaborators</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: 'white', fontFamily: '"General Sans", sans-serif' }}>Your workspace is ready! 🎉</div>
+              <div style={{ fontSize: 14, color: 'hsl(var(--hero-sub))', marginTop: 8 }}>Share the link below with your collaborators</div>
             </div>
 
             {/* Room ID badge */}
@@ -410,8 +520,8 @@ export const LandingPage = ({ onEnter }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button onClick={() => setStep('home')} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: 4 }}><X size={20} /></button>
               <div>
-                <div style={{ fontSize: 24, fontWeight: 800, color: 'white' }}>Join a Workspace</div>
-                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Paste your invite link or room code</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: 'white', fontFamily: '"General Sans", sans-serif' }}>Join a Workspace</div>
+                <div style={{ fontSize: 13, color: 'hsl(var(--hero-sub))', marginTop: 4 }}>Paste your invite link or room code</div>
               </div>
             </div>
 
@@ -461,6 +571,7 @@ export const LandingPage = ({ onEnter }) => {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { useCollaboration } from '../../context/CollaborationContext';
 import { SearchSidebar } from './SearchSidebar';
 import { ExtensionsSidebar } from './ExtensionsSidebar';
 import { AiCopilotSidebar } from './AiCopilotSidebar';
+import { GitSidebar } from './GitSidebar';
 import { getFileIcon } from '../../utils/fileIcons';
 
 export const Sidebar = () => {
@@ -203,6 +204,8 @@ export const Sidebar = () => {
         return <ExtensionsSidebar />;
       case 'ai':
         return <AiCopilotSidebar />;
+      case 'git':
+        return <GitSidebar />;
       case 'explorer':
         return (
           <div className="flex flex-col h-full overflow-hidden">
@@ -360,7 +363,8 @@ export const Sidebar = () => {
       <div className="px-4 py-3 text-[11px] uppercase tracking-wider text-[#cccccc]">
         {activeSidebarTab === 'explorer' ? 'Explorer' : 
          activeSidebarTab === 'search' ? 'Search' : 
-         activeSidebarTab === 'ai' ? 'DevSync AI' : 'Chat'}
+         activeSidebarTab === 'ai' ? 'DevSync AI' : 
+         activeSidebarTab === 'git' ? 'Source Control' : 'Chat'}
       </div>
       {renderContent()}
     </div>

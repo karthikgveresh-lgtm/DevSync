@@ -24,6 +24,16 @@ export const EditorProvider = ({ children, template }) => {
   const { sharedFiles, ydoc, awareness, username: email } = useCollaboration();
   const globalState = ydoc.getMap('globalState');
   const yMessages = ydoc.getArray('messages');
+
+  // Git and Time-Travel States
+  const [isTimeTravelMode, setIsTimeTravelMode] = useState(false);
+  const [isPlayingHistory, setIsPlayingHistory] = useState(false);
+  const [historyPlayIndex, setHistoryPlayIndex] = useState(0);
+  const [historySnapshots, setHistorySnapshots] = useState([]);
+  const [gitCommits, setGitCommits] = useState([]);
+  const [gitRepo, setGitRepo] = useState(localStorage.getItem('devsync_git_repo') || null);
+  const [gitOriginalFiles, setGitOriginalFiles] = useState([]);
+  const [openFileIds, setOpenFileIds] = useState(['1', '2']);
   
   // Track awareness users
   useEffect(() => {
@@ -150,22 +160,37 @@ export const EditorProvider = ({ children, template }) => {
       setMessages(yMessages.toArray());
     };
     
+    const yHistory = ydoc.getArray('history_snapshots');
+    const yCommits = ydoc.getArray('git_commits');
+
+    const historyObserver = () => {
+      setHistorySnapshots(yHistory.toArray());
+    };
+    const commitsObserver = () => {
+      setGitCommits(yCommits.toArray());
+    };
+
     sharedFiles.observe(observer);
     globalState.observe(stateObserver);
     yMessages.observe(messagesObserver);
+    yHistory.observe(historyObserver);
+    yCommits.observe(commitsObserver);
     
     // Initial load
     messagesObserver();
+    historyObserver();
+    commitsObserver();
 
     return () => {
       sharedFiles.unobserve(observer);
       globalState.unobserve(stateObserver);
       yMessages.unobserve(messagesObserver);
+      yHistory.unobserve(historyObserver);
+      yCommits.unobserve(commitsObserver);
     };
   }, [sharedFiles, ydoc, globalState, yMessages]);
   
   const [activeFileId, setActiveFileId] = useState('1');
-  const [openFileIds, setOpenFileIds] = useState(['1', '2']);
   
   const activeFile = files.find(f => f.id === activeFileId && !f.isFolder) || { id: 'dummy', name: 'No File Open', type: 'plaintext', content: '' };
   
@@ -371,6 +396,78 @@ export const EditorProvider = ({ children, template }) => {
     }
   };
 
+  // Git Original Files tracker
+  useEffect(() => {
+    if (files.length > 0 && gitOriginalFiles.length === 0) {
+      setGitOriginalFiles(files.map(f => ({ ...f })));
+    }
+  }, [files, gitOriginalFiles]);
+
+  // Capture history snapshots in background
+  const lastSnapshotTime = useRef(0);
+  useEffect(() => {
+    if (!ydoc || files.length === 0 || isTimeTravelMode) return;
+
+    const yHistory = ydoc.getArray('history_snapshots');
+    const lastSnap = yHistory.length > 0 ? yHistory.get(yHistory.length - 1) : null;
+    
+    // Check if files actually changed compared to the last snapshot
+    const hasChanges = !lastSnap || JSON.stringify(lastSnap.files) !== JSON.stringify(files);
+    
+    if (!hasChanges) return;
+
+    const now = Date.now();
+    // Throttled to 1.5 seconds to capture fluid changes without excessive memory usage
+    if (now - lastSnapshotTime.current > 1500) {
+      lastSnapshotTime.current = now;
+      const snapshot = {
+        timestamp: now,
+        files: files.map(f => ({ ...f })),
+        activeFileId
+      };
+      yHistory.push([snapshot]);
+    }
+  }, [files, activeFileId, ydoc, isTimeTravelMode]);
+
+  // Clone repo mock
+  const cloneRepository = (repoUrl) => {
+    localStorage.setItem('devsync_git_repo', repoUrl);
+    setGitRepo(repoUrl);
+    
+    const templates = [
+      { id: '1', name: 'package.json', type: 'json', content: `{\n  "name": "express-demo",\n  "version": "1.0.0",\n  "scripts": {\n    "start": "node server.js"\n  },\n  "dependencies": {\n    "express": "^4.18.2"\n  }\n}`, isFolder: false, parentId: 'root_folder' },
+      { id: '2', name: 'server.js', type: 'javascript', content: `const express = require('express');\nconst app = express();\nconst PORT = process.env.PORT || 3000;\n\napp.use(express.json());\n\napp.get('/', (req, res) => {\n  res.json({ message: "Welcome to your collaborative DevSync environment!" });\n});\n\napp.listen(PORT, () => {\n  console.log('App running on port ' + PORT);\n});`, isFolder: false, parentId: 'root_folder' },
+      { id: '3', name: 'README.md', type: 'markdown', content: `# Cloned Repo: ${repoUrl}\nThis workspace was successfully cloned from GitHub.\n\n### Running the project\n1. Install dependencies: \`npm install\`\n2. Start server: \`npm start\`\n`, isFolder: false, parentId: 'root_folder' }
+    ];
+    
+    const folderName = repoUrl.split('/').pop() || 'repository';
+    const defaultFolder = { id: 'root_folder', name: folderName, type: 'folder', isFolder: true, isOpen: true, parentId: null };
+    const newFiles = [defaultFolder, ...templates];
+    
+    emitFileSystemUpdate(newFiles);
+    setGitOriginalFiles(newFiles.map(f => ({ ...f })));
+    
+    setActiveFileId('2');
+    setOpenFileIds(['2', '3']);
+  };
+
+  // Commit and Push mock
+  const commitAndPush = (message) => {
+    if (!gitRepo) return;
+    const yCommits = ydoc.getArray('git_commits');
+    const commit = {
+      hash: Math.random().toString(16).substring(2, 8),
+      message,
+      author: email || 'developer',
+      timestamp: Date.now(),
+      filesCount: files.filter(f => !f.isFolder).length
+    };
+    yCommits.push([commit]);
+    
+    // Clear modifications list
+    setGitOriginalFiles(files.map(f => ({ ...f })));
+  };
+
   const value = {
     clients, roomId, username: email, awarenessUsers,
     activeSidebarTab, setActiveSidebarTab,
@@ -387,7 +484,15 @@ export const EditorProvider = ({ children, template }) => {
     emitFileSystemUpdate, handleEditorChange, runCode,
     openFile, openFolder, sendTerminalCommand,
     startVoiceCall, incomingCall, setIncomingCall,
-    socketRef
+    socketRef,
+    // Time travel values
+    isTimeTravelMode, setIsTimeTravelMode,
+    isPlayingHistory, setIsPlayingHistory,
+    historyPlayIndex, setHistoryPlayIndex,
+    historySnapshots,
+    // Git values
+    gitCommits, gitRepo, gitOriginalFiles,
+    cloneRepository, commitAndPush
   };
 
   return (

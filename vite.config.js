@@ -11,12 +11,12 @@ export default defineConfig({
   server: {
     allowedHosts: true,
     headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
       'Cross-Origin-Opener-Policy': 'same-origin'
     },
     proxy: {
       '/yjs': {
-        target: 'ws://localhost:1234',
+        target: 'ws://localhost:5005',
         ws: true,
       }
     }

@@ -12,6 +12,7 @@
     "start": "node server/server.cjs"
   },
   "dependencies": {
+    "@fontsource/geist-sans": "^5.2.5",
     "@hocuspocus/server": "^4.0.0",
     "@monaco-editor/react": "^4.7.0",
     "@webcontainer/api": "^1.6.4",

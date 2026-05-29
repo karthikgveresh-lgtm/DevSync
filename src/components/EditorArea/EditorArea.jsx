@@ -4,13 +4,17 @@ import { MonacoBinding } from 'y-monaco';
 import { useEditor } from '../../context/EditorContext';
 import { useCollaboration } from '../../context/CollaborationContext';
 import { useAuth } from '../../context/AuthContext';
-import { X, Play, FileCode } from 'lucide-react';
+import { X, Play, FileCode, Clock, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { getFileIcon } from '../../utils/fileIcons';
 
 export const EditorArea = () => {
   const {
     activeFileId, openFileIds, openFileById, closeFile,
-    files, handleEditorChange, runCode, awarenessUsers
+    files, handleEditorChange, runCode, awarenessUsers,
+    isTimeTravelMode, setIsTimeTravelMode,
+    isPlayingHistory, setIsPlayingHistory,
+    historyPlayIndex, setHistoryPlayIndex,
+    historySnapshots
   } = useEditor();
   
   const { ydoc, awareness } = useCollaboration();
@@ -20,15 +24,34 @@ export const EditorArea = () => {
   const bindingRef = useRef(null);
   const prevFileIdRef = useRef(null);
 
-  const activeFile = files.find(f => f.id === activeFileId) || {
-    id: 'none', name: 'No File', content: '', type: 'plaintext'
-  };
+  const activeFile = isTimeTravelMode
+    ? (historySnapshots[historyPlayIndex]?.files?.find(f => f.id === activeFileId) || { id: 'none', name: 'No File', content: '', type: 'plaintext' })
+    : (files.find(f => f.id === activeFileId) || {
+        id: 'none', name: 'No File', content: '', type: 'plaintext'
+      });
 
   // The editor instance changes when activeFileId changes because of key={activeFileId}.
   // We initialize the Yjs binding when the specific editor instance mounts.
   
   // We use an effect just for cleanup on unmount of the entire component, 
   // but individual bindings are cleaned up when the editor remounts.
+  // Time Travel playback loop
+  useEffect(() => {
+    let timer = null;
+    if (isPlayingHistory && isTimeTravelMode) {
+      timer = setInterval(() => {
+        setHistoryPlayIndex(prev => {
+          if (prev >= historySnapshots.length - 1) {
+            setIsPlayingHistory(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isPlayingHistory, isTimeTravelMode, historySnapshots.length, setHistoryPlayIndex, setIsPlayingHistory]);
+
   useEffect(() => {
     return () => {
       if (bindingRef.current) {
@@ -53,22 +76,26 @@ export const EditorArea = () => {
   const handleEditorMount = (editor, monaco) => {
     editorRef.current = editor;
     
-    // Set readOnly based on role
-    editor.updateOptions({ readOnly: userRole === 'viewer' });
+    // Set readOnly based on role and time travel mode
+    editor.updateOptions({ readOnly: userRole === 'viewer' || isTimeTravelMode });
     
     if (bindingRef.current) {
       bindingRef.current.destroy();
       bindingRef.current = null;
     }
 
-    const yText = ydoc.getText(`file_content_${activeFileId}`);
+    if (!isTimeTravelMode) {
+      const yText = ydoc.getText(`file_content_${activeFileId}`);
 
-    bindingRef.current = new MonacoBinding(
-      yText,
-      editor.getModel(),
-      new Set([editor]),
-      awareness
-    );
+      bindingRef.current = new MonacoBinding(
+        yText,
+        editor.getModel(),
+        new Set([editor]),
+        awareness
+      );
+    } else {
+      editor.setValue(activeFile.content || '');
+    }
 
     // ── DevSync AI: Inline Autocomplete (Ghost Text) ──
     if (!completionProviderRef.current) {
@@ -179,7 +206,22 @@ export const EditorArea = () => {
           {getFileIcon(activeFile.name, false, false)}
           {activeFile.name}
         </span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 16 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
+          <button 
+            onClick={() => {
+              if (historySnapshots.length === 0) {
+                alert("No coding history recorded yet!");
+                return;
+              }
+              setIsTimeTravelMode(!isTimeTravelMode);
+              setHistoryPlayIndex(historySnapshots.length - 1);
+              setIsPlayingHistory(false);
+            }} 
+            title="Time Travel Replay" 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: isTimeTravelMode ? '#7c6fff' : '#858585', display: 'flex' }}
+          >
+            <Clock size={14} />
+          </button>
           <button onClick={runCode} title="Run Code" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#858585', display: 'flex' }}>
             <Play size={14} fill="currentColor" />
           </button>
@@ -190,7 +232,7 @@ export const EditorArea = () => {
       <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
         {activeFileId && activeFileId !== 'none' ? (
           <Editor
-            key={activeFileId}
+            key={`${activeFileId}_${isTimeTravelMode}`}
             height="100%"
             theme="vs-dark"
             language={getLanguage(activeFile.name)}
@@ -211,10 +253,109 @@ export const EditorArea = () => {
         ) : (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.2, userSelect: 'none', color: '#cccccc' }}>
             <FileCode size={100} strokeWidth={0.5} />
-            <p style={{ marginTop: 16, fontSize: 20, fontWeight: 300 }}>Select a file to edit</p>
+            <p style={{ marginTop: 16, fontSize: 20, fontStyle: 300 }}>Select a file to edit</p>
           </div>
         )}
       </div>
+
+      {/* Time-Travel Replay Panel */}
+      {isTimeTravelMode && (
+        <div style={{
+          background: 'linear-gradient(90deg, #10101e, #1a1a2e)',
+          borderTop: '1px solid #7c6fff50',
+          padding: '12px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          zIndex: 50,
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.5)',
+          color: '#cccccc',
+          fontFamily: "'Segoe UI', sans-serif"
+        }}>
+          {/* Header & Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="animate-pulse" style={{ width: 8, height: 8, borderRadius: '50%', background: '#7c6fff' }} />
+              <span style={{ fontSize: 11, fontWeight: 'bold', color: '#e0e0ff', letterSpacing: 0.5 }}>
+                TIME TRAVEL PLAYBACK
+              </span>
+              <span style={{ fontSize: 11, color: '#858585' }}>
+                (Snapshot {historyPlayIndex + 1} of {historySnapshots.length})
+              </span>
+            </div>
+
+            {/* Playback Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <button
+                onClick={() => setHistoryPlayIndex(0)}
+                title="Restart"
+                style={{ background: 'none', border: 'none', color: '#858585', cursor: 'pointer', display: 'flex' }}
+              >
+                <SkipBack size={16} />
+              </button>
+              
+              <button
+                onClick={() => setIsPlayingHistory(!isPlayingHistory)}
+                style={{
+                  background: '#7c6fff', border: 'none', borderRadius: '50%',
+                  width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', cursor: 'pointer', boxShadow: '0 0 10px rgba(124,111,255,0.4)',
+                }}
+              >
+                {isPlayingHistory ? <Pause size={16} fill="white" /> : <Play size={16} fill="white" style={{ marginLeft: 2 }} />}
+              </button>
+              
+              <button
+                onClick={() => setHistoryPlayIndex(historySnapshots.length - 1)}
+                title="Jump to End"
+                style={{ background: 'none', border: 'none', color: '#858585', cursor: 'pointer', display: 'flex' }}
+              >
+                <SkipForward size={16} />
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                setIsTimeTravelMode(false);
+                setIsPlayingHistory(false);
+              }}
+              style={{
+                background: '#f4433620', border: '1px solid #f4433650', color: '#f44336',
+                padding: '4px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                transition: 'all 0.2s',
+              }}
+            >
+              Exit Playback
+            </button>
+          </div>
+
+          {/* Timeline Slider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 11, color: '#858585', fontFamily: 'monospace', minWidth: 60 }}>
+              {new Date(historySnapshots[0]?.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+            
+            <input
+              type="range"
+              min={0}
+              max={historySnapshots.length - 1}
+              value={historyPlayIndex}
+              onChange={e => {
+                setHistoryPlayIndex(Number(e.target.value));
+                setIsPlayingHistory(false);
+              }}
+              style={{
+                flex: 1, accentColor: '#7c6fff', height: 4, borderRadius: 2,
+                cursor: 'pointer',
+              }}
+            />
+            
+            <span style={{ fontSize: 11, color: '#858585', fontFamily: 'monospace', minWidth: 60, textAlign: 'right' }}>
+              {new Date(historySnapshots[historyPlayIndex]?.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          </div>
+        </div>
+      )}
       {/* Dynamic Cursor Styles */}
       <style>
         {awarenessUsers && awarenessUsers.map(u => {
